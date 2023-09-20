@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.10)
+project(ChromeTraceSenderReceiver)
+
+# 添加 sender 可执行文件
+add_executable(sender sender.c)
+
+# 添加 receiver 可执行文件
+add_executable(receiver receiver.c)
+
+# 添加 cJSON 库的包含目录和链接库
+target_include_directories(receiver PUBLIC /usr/local/include/cjson) # 替换为实际 cjson 库的路径
+target_link_libraries(receiver /usr/local/lib/libcjson.so m) # 替换为实际 cjson 库的路径
+
+# 指定 C 标准
+set(CMAKE_C_STANDARD 11)
+
+# 安装目标文件
+install(TARGETS sender receiver DESTINATION bin)
