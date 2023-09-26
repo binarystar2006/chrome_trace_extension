@@ -3,14 +3,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <unistd.h>
-
-struct ChromeTraceEvent {
-    char name[128];
-    char ph;
-    int64_t ts;
-    int pid;
-    int tid;
-};
+#include "ctrace.h"
 
 int main() {
     int sockfd;
@@ -36,7 +29,7 @@ int main() {
     }
 
     // 创建一个Chrome Trace事件并发送
-    struct ChromeTraceEvent* event = malloc(sizeof(struct ChromeTraceEvent));
+    struct ChromeTraceEvent* event = new ChromeTraceEvent();
     strcpy(event->name, "MyEvent");
     event->ph = 'B';
     event->ts = 123456789;
