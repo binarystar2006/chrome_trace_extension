@@ -16,8 +16,8 @@ add_executable(receiver receiver.cc)
 
 
 # 添加 cJSON 库的包含目录和链接库
-target_include_directories(receiver PUBLIC /usr/local/include/cjson) # 替换为实际 cjson 库的路径
-target_link_libraries(receiver /usr/local/lib/libcjson.so) # 替换为实际 cjson 库的路径
+target_include_directories(receiver PRIVATE /usr/local/include/cjson) # 替换为实际 cjson 库的路径
+target_link_libraries(receiver PRIVATE /usr/local/lib/libcjson.so) # 替换为实际 cjson 库的路径
 
 
 # 安装目标文件

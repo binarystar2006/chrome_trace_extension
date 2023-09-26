@@ -83,7 +83,7 @@ void WriterThread() {
         std::cerr << "Error opening file" << std::endl;
         return;
     }
-    outputFile <<"[]"<<std::endl;
+    outputFile <<"["<<std::endl;
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等待一段时间
 
@@ -97,12 +97,11 @@ void WriterThread() {
 
         if (!eventsToWrite.empty()) {
             for (const auto& event : eventsToWrite) {
-                outputFile.seekp(-2, std::ios::cur);
                 cJSON *root = cJSON_CreateObject();
                 cJSON* jsonEvent = EventToJson(event, root);
                     // 将JSON对象序列化为字符串
                 char *jsonStr = cJSON_Print(jsonEvent);
-                outputFile << jsonStr <<",]" <<std::endl;
+                outputFile << jsonStr <<"," <<std::endl;
                 cJSON_Delete(jsonEvent);
             }
         }
