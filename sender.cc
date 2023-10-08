@@ -30,7 +30,7 @@ int main() {
 
     // 创建一个Chrome Trace事件并发送
     struct ChromeTraceEvent* event = new ChromeTraceEvent();
-    strcpy(event->name, "MyEvent");
+    strcpy(event->name, B);
     event->ph = 'B';
     event->ts = 123456789;
     event->pid = getpid();
