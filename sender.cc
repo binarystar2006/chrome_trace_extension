@@ -36,7 +36,7 @@ int main() {
         struct ChromeTraceEvent* event = new ChromeTraceEvent();
         event->name= B;
         event->ph = 'B';
-        event->ts = i*100;
+        event->ts = 500*i+100 ;
         event->pid = getpid();
         event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
 
@@ -48,7 +48,7 @@ int main() {
         event->pid = getpid();
         event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
         event->ph = 'E';
-        event->ts = i*200;
+        event->ts = 500*i+200;
 
         // 发送事件到服务器
         send(sockfd, event, sizeof(*event), 0);
@@ -57,7 +57,7 @@ int main() {
         event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
         event->name = A;
         event->ph = 'B';
-        event->ts = i*220;
+        event->ts = 500*i+300;
 
         // 发送事件到服务器
         send(sockfd, event, sizeof(*event), 0);
@@ -68,7 +68,7 @@ int main() {
         event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
         event->name = A;
         event->ph = 'E';
-        event->ts = i*320;
+        event->ts = 500*i+350;
 
         // 发送事件到服务器
         send(sockfd, event, sizeof(*event), 0);

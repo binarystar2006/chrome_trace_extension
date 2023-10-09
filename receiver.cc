@@ -37,6 +37,7 @@ cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
 
 // 线程函数，用于接收Socket信息并保存到std::list
 void ChromeTrace::ReceiverThread() {
+    long idx=0;
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd == -1) {
         std::cerr << "Error creating socket" << std::endl;
@@ -72,7 +73,6 @@ void ChromeTrace::ReceiverThread() {
     }
 
     while (true) {
-        long idx=0;
         ChromeTraceEvent* event = new ChromeTraceEvent();
         ssize_t bytesRead = recv(newSock, event, sizeof(*event), 0);
         if (bytesRead == sizeof(*event)) {
@@ -99,9 +99,9 @@ void ChromeTrace::WriterThread() {
 
         std::list<ChromeTraceEvent> eventsToWrite;
 
-        std::cout << "Writer thread wait write lock"<<std::endl;
+        // std::cout << "Writer thread wait write lock"<<std::endl;
         std::lock_guard<std::mutex> lock(eventMutex);
-        std::cout << "Writer thread get write lock"<<std::endl;
+        // std::cout << "Writer thread get write lock"<<std::endl;
         eventsToWrite = eventList;
         eventList.clear();
 
