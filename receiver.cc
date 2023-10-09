@@ -4,7 +4,6 @@
 #include <ctime>
 #include <cstring>
 #include <fstream>
-#include <netinet/in.h>
 #include <unistd.h>
 #include "ctrace.h"
 #include "cJSON.h" // 使用cJSON库
@@ -14,16 +13,31 @@ ChromeTrace::ChromeTrace() {
         trcNameMap[B] = traceName[B];
         trcNameMap[C] = traceName[C];
 
+            // 设置服务器信息
+        memset(&serverAddr, 0, sizeof(serverAddr));
+        serverAddr.sin_family = AF_INET;
+        serverAddr.sin_port = htons(TRACE_PORT); // 服务器端口
+        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // 服务器IP
+
         writerThread = std::thread{&ChromeTrace::WriterThread, this};
         receiverThread = std::thread{&ChromeTrace::ReceiverThread, this};
         // receiverThread.join();
         // writerThread.join();
+            // 创建Socket
+        sockfd = socket(AF_INET, SOCK_STREAM, 0);
+        if (sockfd == -1) {
+            perror("Error creating socket");
+            exit(1);
+        }
+
+        // 连接到服务器
+        while (connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+            perror("Error connecting to server, retrying...");
+            sleep(1);
+        }
         std::cout<< "ChromeTrace Initiallized Done"<<std::endl;
 }
 
-
-ChromeTrace::~ChromeTrace() {
-}
 // 函数用于将事件转换为JSON字符串
 cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
  // 创建JSON对象
@@ -32,6 +46,7 @@ cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
     cJSON_AddNumberToObject(root, "ts", (double)event.ts);
     cJSON_AddNumberToObject(root, "pid", event.pid);
     cJSON_AddNumberToObject(root, "tid", event.tid);
+    cJSON_AddStringToObject(root, "cat", catName[event.cat]);
     return root;
 }
 
