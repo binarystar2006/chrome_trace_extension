@@ -4,10 +4,13 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include "ctrace.h"
+#include <iostream>
 
 int main() {
     int sockfd;
     struct sockaddr_in serverAddr;
+    ChromeTrace ctce_rcv;
+    long idx=0;
 
     // 创建Socket
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -19,7 +22,7 @@ int main() {
     // 设置服务器信息
     memset(&serverAddr, 0, sizeof(serverAddr));
     serverAddr.sin_family = AF_INET;
-    serverAddr.sin_port = htons(12345); // 服务器端口
+    serverAddr.sin_port = htons(TRACE_PORT); // 服务器端口
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // 服务器IP
 
     // 连接到服务器
@@ -28,17 +31,50 @@ int main() {
         exit(1);
     }
 
-    // 创建一个Chrome Trace事件并发送
-    struct ChromeTraceEvent* event = new ChromeTraceEvent();
-    strcpy(event->name, B);
-    event->ph = 'B';
-    event->ts = 123456789;
-    event->pid = getpid();
-    event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
+    for(int i=1; i<10;i++) {
+        // 创建一个Chrome Trace事件并发送
+        struct ChromeTraceEvent* event = new ChromeTraceEvent();
+        event->name= B;
+        event->ph = 'B';
+        event->ts = i*100;
+        event->pid = getpid();
+        event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
 
-    // 发送事件到服务器
-    send(sockfd, event, sizeof(*event), 0);
+        // 发送事件到服务器
+        send(sockfd, event, sizeof(*event), 0);
+        std::cout << "Sending " << idx++<<" events"<<std::endl;
 
+        event->name= B;
+        event->pid = getpid();
+        event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
+        event->ph = 'E';
+        event->ts = i*200;
+
+        // 发送事件到服务器
+        send(sockfd, event, sizeof(*event), 0);
+        std::cout << "Sending " << idx++<<" events"<<std::endl;
+        event->pid = getpid();
+        event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
+        event->name = A;
+        event->ph = 'B';
+        event->ts = i*220;
+
+        // 发送事件到服务器
+        send(sockfd, event, sizeof(*event), 0);
+        std::cout << "Sending " << idx++<<" events"<<std::endl;
+
+                std::cout << "Sending " << idx++<<" events"<<std::endl;
+        event->pid = getpid();
+        event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
+        event->name = A;
+        event->ph = 'E';
+        event->ts = i*320;
+
+        // 发送事件到服务器
+        send(sockfd, event, sizeof(*event), 0);
+        std::cout << "Sending " << idx++<<" events"<<std::endl;
+    }
+    while(1){;}
     // 关闭Socket连接
     close(sockfd);
 
