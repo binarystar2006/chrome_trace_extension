@@ -14,8 +14,8 @@ ChromeTrace::ChromeTrace() {
         trcNameMap[B] = traceName[B];
         trcNameMap[C] = traceName[C];
 
-        receiverThread = std::thread{&ChromeTrace::ReceiverThread, this};
         writerThread = std::thread{&ChromeTrace::WriterThread, this};
+        receiverThread = std::thread{&ChromeTrace::ReceiverThread, this};
         // receiverThread.join();
         // writerThread.join();
         std::cout<< "ChromeTrace Initiallized Done"<<std::endl;

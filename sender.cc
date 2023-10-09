@@ -26,12 +26,12 @@ int main() {
     serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // 服务器IP
 
     // 连接到服务器
-    if (connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
+    while (connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
         perror("Error connecting to server");
-        exit(1);
+        sleep(1);
     }
 
-    for(int i=1; i<10;i++) {
+    for(int i=1; i<100;i++) {
         // 创建一个Chrome Trace事件并发送
         struct ChromeTraceEvent* event = new ChromeTraceEvent();
         event->name= B;
@@ -48,13 +48,13 @@ int main() {
         event->pid = getpid();
         event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
         event->ph = 'E';
-        event->ts = 500*i+200;
+        event->ts = 500*i+250;
 
         // 发送事件到服务器
         send(sockfd, event, sizeof(*event), 0);
         std::cout << "Sending " << idx++<<" events"<<std::endl;
         event->pid = getpid();
-        event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
+        event->tid = 1; // 如果有多个线程，可以设置不同的线程ID
         event->name = A;
         event->ph = 'B';
         event->ts = 500*i+300;
@@ -63,12 +63,11 @@ int main() {
         send(sockfd, event, sizeof(*event), 0);
         std::cout << "Sending " << idx++<<" events"<<std::endl;
 
-                std::cout << "Sending " << idx++<<" events"<<std::endl;
         event->pid = getpid();
-        event->tid = 0; // 如果有多个线程，可以设置不同的线程ID
+        event->tid = 1; // 如果有多个线程，可以设置不同的线程ID
         event->name = A;
         event->ph = 'E';
-        event->ts = 500*i+350;
+        event->ts = 500*i+480;
 
         // 发送事件到服务器
         send(sockfd, event, sizeof(*event), 0);
