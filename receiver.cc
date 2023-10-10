@@ -44,8 +44,8 @@ cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
     cJSON_AddStringToObject(root, "name", trcNameMap[event.name]);
     cJSON_AddStringToObject(root, "ph", (const char*)&event.ph);
     cJSON_AddNumberToObject(root, "ts", (double)event.ts);
-    cJSON_AddNumberToObject(root, "pid", event.pid);
-    cJSON_AddNumberToObject(root, "tid", event.tid);
+    cJSON_AddStringToObject(root, "pid", processName[event.pid]);
+    cJSON_AddStringToObject(root, "tid", threadName[event.tid]);
     cJSON_AddStringToObject(root, "cat", catName[event.cat]);
     return root;
 }

@@ -25,6 +25,14 @@ const char traceName[][128] {
 const char catName[][128] {
     {"first"},{"second"},{"third"}
 };
+
+const char processName[][128] {
+    {"CPU0"},{"CPU1"},{"CPU2"}
+};
+
+const char threadName[][128] {
+    {"thread0"},{"thread1"},{"thread2"}
+};
 struct ChromeTraceEvent {
     uint32_t name;
     char ph;
