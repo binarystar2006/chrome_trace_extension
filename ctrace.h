@@ -23,7 +23,7 @@ const char traceName[][128] {
 };
 
 const char catName[][128] {
-    {"first"},{"second"},{"third"}
+    {""},{"first"},{"second"},{"third"}
 };
 
 const char processName[][128] {
@@ -35,8 +35,8 @@ const char threadName[][128] {
 };
 struct ChromeTraceEvent {
     uint32_t name;
-    char ph;
-    int64_t ts;
+    char ph[2];
+    uint64_t ts;
     int pid;
     int tid;
     uint32_t cat;
@@ -54,8 +54,8 @@ public:
         return sockfd;
     }
 
-    void DurationTraceBegin();
-    void DurationTraceEnd();
+    void DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
+    void DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
     void CompleteTrace();
     void InstantTrace();
     void CounterTrace();
@@ -74,7 +74,9 @@ public:
     void MemoryDumpTraceProcess();
     void MarkTrace();
     void ClockSyncTrace();
+
 private:
+    void FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts);
     cJSON* EventToJson(const ChromeTraceEvent& event, cJSON *root);
     void ReceiverThread();
     void WriterThread();

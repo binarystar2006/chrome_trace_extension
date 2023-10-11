@@ -42,11 +42,12 @@ ChromeTrace::ChromeTrace() {
 cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
  // 创建JSON对象
     cJSON_AddStringToObject(root, "name", trcNameMap[event.name]);
-    cJSON_AddStringToObject(root, "ph", (const char*)&event.ph);
-    cJSON_AddNumberToObject(root, "ts", (double)event.ts);
+    cJSON_AddStringToObject(root, "ph", event.ph);
+    cJSON_AddNumberToObject(root, "ts", event.ts);
     cJSON_AddStringToObject(root, "pid", processName[event.pid]);
     cJSON_AddStringToObject(root, "tid", threadName[event.tid]);
-    cJSON_AddStringToObject(root, "cat", catName[event.cat]);
+    if (event.cat)
+        cJSON_AddStringToObject(root, "cat", catName[event.cat]);
     return root;
 }
 
@@ -133,4 +134,29 @@ void ChromeTrace::WriterThread() {
         }
     }
     outputFile.close();
+}
+
+void ChromeTrace::FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts) {
+    event.name = name;
+    event.pid = pid;
+    event.tid = tid;
+    event.ts = ts;
+}
+
+void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    ChromeTraceEvent event;
+    FillCommonEvent(event, pid, tid, name, ts);
+    event.ph[0] = 'B';
+    event.ph[1] = '\0';
+    event.cat = cat;
+    send(sockfd, &event, sizeof(event), 0);
+}
+
+void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    ChromeTraceEvent event;
+    FillCommonEvent(event, pid, tid, name, ts);
+    event.ph[0] = 'E';
+    event.ph[1] = '\0';
+    event.cat = cat;
+    send(sockfd, &event, sizeof(event), 0);
 }

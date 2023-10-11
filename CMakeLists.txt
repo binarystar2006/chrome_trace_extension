@@ -16,16 +16,16 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -g")
 add_executable(sender sender.cc)
 
 # 添加 receiver 可执行文件
-add_library(receiver SHARED receiver.cc)
+add_library(ctracer SHARED ctracer.cc)
 
 
 # 添加 cJSON 库的包含目录和链接库
-target_include_directories(receiver PRIVATE /usr/local/include/cjson) # 替换为实际 cjson 库的路径
-target_link_libraries(receiver PRIVATE /usr/local/lib/libcjson.so) # 替换为实际 cjson 库的路径
-target_include_directories(receiver PRIVATE ./) # 替换为实际 cjson 库的路径
-target_link_libraries(sender PUBLIC receiver)
+target_include_directories(ctracer PRIVATE /usr/local/include/cjson) # 替换为实际 cjson 库的路径
+target_link_libraries(ctracer PRIVATE /usr/local/lib/libcjson.so) # 替换为实际 cjson 库的路径
+target_include_directories(ctracer PRIVATE ./) # 替换为实际 cjson 库的路径
+target_link_libraries(sender PUBLIC ctracer)
 
 
 # 安装目标文件
-install(TARGETS receiver DESTINATION lib)
+install(TARGETS ctracer DESTINATION lib)
 install(TARGETS sender DESTINATION bin)
