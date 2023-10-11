@@ -37,6 +37,7 @@ struct ChromeTraceEvent {
     uint32_t name;
     char ph[2];
     uint64_t ts;
+    uint64_t dur;
     int pid;
     int tid;
     uint32_t cat;
@@ -56,7 +57,7 @@ public:
 
     void DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
     void DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
-    void CompleteTrace();
+    void CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts,uint64_t dur, uint32_t cat);
     void InstantTrace();
     void CounterTrace();
     void AsyncTraceNestStart();

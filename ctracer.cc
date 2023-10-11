@@ -44,6 +44,8 @@ cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
     cJSON_AddStringToObject(root, "name", trcNameMap[event.name]);
     cJSON_AddStringToObject(root, "ph", event.ph);
     cJSON_AddNumberToObject(root, "ts", event.ts);
+    if (event.ph[0]=='X')
+        cJSON_AddNumberToObject(root, "dur", event.dur);
     cJSON_AddStringToObject(root, "pid", processName[event.pid]);
     cJSON_AddStringToObject(root, "tid", threadName[event.tid]);
     if (event.cat)
@@ -157,6 +159,16 @@ void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, ui
     FillCommonEvent(event, pid, tid, name, ts);
     event.ph[0] = 'E';
     event.ph[1] = '\0';
+    event.cat = cat;
+    send(sockfd, &event, sizeof(event), 0);
+}
+
+void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts,uint64_t dur, uint32_t cat=0) {
+    ChromeTraceEvent event;
+    FillCommonEvent(event, pid, tid, name, ts);
+    event.ph[0] = 'X';
+    event.ph[1] = '\0';
+    event.dur = dur;
     event.cat = cat;
     send(sockfd, &event, sizeof(event), 0);
 }

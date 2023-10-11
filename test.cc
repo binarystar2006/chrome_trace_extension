@@ -19,6 +19,7 @@ int main() {
         std::cout << "Sending " << idx++<<" events"<<std::endl;
     
         ctrace.DurationTraceEnd(0, 0, B, 500*i+250, 0);
+        ctrace.CompleteTrace(0,0,C, 500*i, 500, 0);
 
         std::cout << "Sending " << idx++<<" events"<<std::endl;
 
