@@ -21,8 +21,10 @@ add_library(ctracer SHARED ctracer.cc)
 
 # 添加 cJSON 库的包含目录和链接库
 target_include_directories(ctracer PRIVATE /usr/local/include/cjson) # 替换为实际 cjson 库的路径
+target_include_directories(ctracer PRIVATE ./) # header
 target_link_libraries(ctracer PRIVATE /usr/local/lib/libcjson.so) # 替换为实际 cjson 库的路径
-target_include_directories(ctracer PRIVATE ./) # 替换为实际 cjson 库的路径
+
+
 target_link_libraries(test PUBLIC ctracer)
 
 

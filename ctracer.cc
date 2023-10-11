@@ -44,10 +44,18 @@ cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
     cJSON_AddStringToObject(root, "name", trcNameMap[event.name]);
     cJSON_AddStringToObject(root, "ph", event.ph);
     cJSON_AddNumberToObject(root, "ts", event.ts);
-    if (event.ph[0]=='X')
-        cJSON_AddNumberToObject(root, "dur", event.dur);
     cJSON_AddStringToObject(root, "pid", processName[event.pid]);
     cJSON_AddStringToObject(root, "tid", threadName[event.tid]);
+
+    if (event.ph[0]=='X')
+        cJSON_AddNumberToObject(root, "dur", event.dur);
+    if (event.ph[0]=='i')
+        switch (event.scop[0]) {
+            case 'g':
+            case 'p':
+            case 't':
+                cJSON_AddStringToObject(root, "s", event.scop);
+        }
     if (event.cat)
         cJSON_AddStringToObject(root, "cat", catName[event.cat]);
     return root;
@@ -138,37 +146,41 @@ void ChromeTrace::WriterThread() {
     outputFile.close();
 }
 
-void ChromeTrace::FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts) {
+inline void ChromeTrace::FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat) {
     event.name = name;
     event.pid = pid;
     event.tid = tid;
     event.ts = ts;
+    event.cat = cat;
 }
 
 void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
-    ChromeTraceEvent event;
-    FillCommonEvent(event, pid, tid, name, ts);
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'B';
-    event.ph[1] = '\0';
-    event.cat = cat;
     send(sockfd, &event, sizeof(event), 0);
 }
 
 void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
-    ChromeTraceEvent event;
-    FillCommonEvent(event, pid, tid, name, ts);
+    ChromeTraceEvent event={0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'E';
-    event.ph[1] = '\0';
-    event.cat = cat;
     send(sockfd, &event, sizeof(event), 0);
 }
 
 void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts,uint64_t dur, uint32_t cat=0) {
-    ChromeTraceEvent event;
-    FillCommonEvent(event, pid, tid, name, ts);
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'X';
-    event.ph[1] = '\0';
     event.dur = dur;
-    event.cat = cat;
+    send(sockfd, &event, sizeof(event), 0);
+}
+
+void ChromeTrace::InstantTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, char scop, uint32_t cat=0) {
+    std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", scop "<<scop<<", cat "<<cat<<std::endl;
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
+    event.ph[0] = 'i';
+    event.scop[0] = scop;
     send(sockfd, &event, sizeof(event), 0);
 }
