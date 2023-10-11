@@ -8,7 +8,7 @@
 #include "ctrace.h"
 #include "cJSON.h" // 使用cJSON库
 
-ChromeTrace::ChromeTrace() {
+ChromeTrace::ChromeTrace(bool debug):debug(debug) {
         trcNameMap[A] = traceName[A];
         trcNameMap[B] = traceName[B];
         trcNameMap[C] = traceName[C];
@@ -103,7 +103,8 @@ void ChromeTrace::ReceiverThread() {
         ssize_t bytesRead = recv(newSock, event, sizeof(*event), 0);
         if (bytesRead == sizeof(*event)) {
             std::lock_guard<std::mutex> lock(eventMutex);
-            std::cout << "Receiver get "<<idx++<<"s events"<<std::endl;
+            if(debug)
+                std::cout << "Receiver get "<<idx++<<"s events"<<std::endl;
             eventList.push_back(*event);
         }
     }
@@ -133,7 +134,8 @@ void ChromeTrace::WriterThread() {
 
         if (!eventsToWrite.empty()) {
             for (const auto& event : eventsToWrite) {
-                std::cout << "Writer get "<< idx++<<"s events"<<std::endl;
+                if(debug)
+                    std::cout << "Writer get "<< idx++<<"s events"<<std::endl;
                 cJSON *root = cJSON_CreateObject();
                 cJSON* jsonEvent = EventToJson(event, root);
                     // 将JSON对象序列化为字符串
@@ -155,6 +157,8 @@ inline void ChromeTrace::FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, 
 }
 
 void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
     FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'B';
@@ -162,6 +166,8 @@ void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, 
 }
 
 void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event={0};
     FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'E';
@@ -169,6 +175,8 @@ void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, ui
 }
 
 void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts,uint64_t dur, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", dur "<<dur<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
     FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'X';
@@ -177,7 +185,8 @@ void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint6
 }
 
 void ChromeTrace::InstantTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, char scop, uint32_t cat=0) {
-    std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", scop "<<scop<<", cat "<<cat<<std::endl;
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", scop "<<scop<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
     FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'i';

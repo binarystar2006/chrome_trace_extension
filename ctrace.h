@@ -46,7 +46,7 @@ struct ChromeTraceEvent {
 
 class ChromeTrace {
 public:
-    ChromeTrace();
+    ChromeTrace(bool debug);
     ~ChromeTrace() {
         // 关闭Socket连接
         if(sockfd)
@@ -92,4 +92,6 @@ private:
     /*sender*/
     struct sockaddr_in serverAddr;
     int sockfd;
+    /*common*/
+    bool debug;
 };

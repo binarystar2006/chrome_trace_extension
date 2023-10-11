@@ -8,10 +8,9 @@
 int main() {
 
 
-    ChromeTrace ctrace;
+    ChromeTrace ctrace(false);
     long idx=0;
 
-    int sockfd = ctrace.GetSockfd();
     for(int i=1; i<10;i++) {
         // 创建一个Chrome Trace事件并发送
         ctrace.DurationTraceBegin(0, 0, B, 500*i+100, 0);    
