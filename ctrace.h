@@ -19,7 +19,7 @@ C
 }T_NAME_E;
 
 const char traceName[][128] {
-    {"alpha"},{"beta"},{"gamma"}
+    {"dur"},{"instance"},{"counter"},{"complete"},{"async"}
 };
 
 const char catName[][128] {
@@ -60,10 +60,10 @@ public:
     void DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
     void CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts,uint64_t dur, uint32_t cat);
     void InstantTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, char scop, uint32_t cat);
-    void CounterTrace();
-    void AsyncTraceNestStart();
-    void AsyncTraceNestEnd();
-    void AsyncTraceNestInstant();
+    void CounterTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
+    void AsyncTraceNestStart(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
+    void AsyncTraceNestEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
+    void AsyncTraceNestInstant(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat);
     void FlowTraceStart();
     void FlowTraceEnd();
     void FlowTraceStep();

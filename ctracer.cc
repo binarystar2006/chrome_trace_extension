@@ -9,9 +9,6 @@
 #include "cJSON.h" // 使用cJSON库
 
 ChromeTrace::ChromeTrace(bool debug):debug(debug) {
-        trcNameMap[A] = traceName[A];
-        trcNameMap[B] = traceName[B];
-        trcNameMap[C] = traceName[C];
 
             // 设置服务器信息
         memset(&serverAddr, 0, sizeof(serverAddr));
@@ -41,21 +38,22 @@ ChromeTrace::ChromeTrace(bool debug):debug(debug) {
 // 函数用于将事件转换为JSON字符串
 cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
  // 创建JSON对象
-    cJSON_AddStringToObject(root, "name", trcNameMap[event.name]);
+    cJSON_AddStringToObject(root, "name", traceName[event.name]);
     cJSON_AddStringToObject(root, "ph", event.ph);
     cJSON_AddNumberToObject(root, "ts", event.ts);
     cJSON_AddStringToObject(root, "pid", processName[event.pid]);
     cJSON_AddStringToObject(root, "tid", threadName[event.tid]);
 
-    if (event.ph[0]=='X')
+    if (event.ph[0]=='X') {
         cJSON_AddNumberToObject(root, "dur", event.dur);
-    if (event.ph[0]=='i')
+    } else if (event.ph[0]=='i') {
         switch (event.scop[0]) {
             case 'g':
             case 'p':
             case 't':
                 cJSON_AddStringToObject(root, "s", event.scop);
         }
+    }
     if (event.cat)
         cJSON_AddStringToObject(root, "cat", catName[event.cat]);
     return root;
@@ -191,5 +189,40 @@ void ChromeTrace::InstantTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64
     FillCommonEvent(event, pid, tid, name, ts, cat);
     event.ph[0] = 'i';
     event.scop[0] = scop;
+    send(sockfd, &event, sizeof(event), 0);
+}
+
+void ChromeTrace::CounterTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
+    event.ph[0] = 'C';
+    send(sockfd, &event, sizeof(event), 0);
+}
+
+void ChromeTrace::AsyncTraceNestStart(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
+    event.ph[0] = 'b';
+    send(sockfd, &event, sizeof(event), 0);
+}
+
+void ChromeTrace::AsyncTraceNestEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
+    event.ph[0] = 'e';
+    send(sockfd, &event, sizeof(event), 0);
+}
+void ChromeTrace::AsyncTraceNestInstant(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+    if(debug)
+        std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
+    ChromeTraceEvent event = {0};
+    FillCommonEvent(event, pid, tid, name, ts, cat);
+    event.ph[0] = 'n';
     send(sockfd, &event, sizeof(event), 0);
 }
