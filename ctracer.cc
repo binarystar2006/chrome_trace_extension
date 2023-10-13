@@ -6,28 +6,28 @@
 #include <fstream>
 #include <unistd.h>
 #include "ctrace.h"
-#include "cJSON.h" // 使用cJSON库
+#include "cJSON.h" // Using the cJSON library
 
 ChromeTrace::ChromeTrace(bool debug):debug(debug) {
 
-            // 设置服务器信息
+            // Set server information
         memset(&serverAddr, 0, sizeof(serverAddr));
         serverAddr.sin_family = AF_INET;
-        serverAddr.sin_port = htons(TRACE_PORT); // 服务器端口
-        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // 服务器IP
+        serverAddr.sin_port = htons(TRACE_PORT); // Server port
+        serverAddr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Server IP
 
         writerThread = std::thread{&ChromeTrace::WriterThread, this};
         receiverThread = std::thread{&ChromeTrace::ReceiverThread, this};
         // receiverThread.join();
         // writerThread.join();
-            // 创建Socket
+            // Create Socket
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
         if (sockfd == -1) {
             perror("Error creating socket");
             exit(1);
         }
 
-        // 连接到服务器
+        // Connect to server
         while (connect(sockfd, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) == -1) {
             perror("Error connecting to server, retrying...");
             sleep(1);
@@ -35,10 +35,10 @@ ChromeTrace::ChromeTrace(bool debug):debug(debug) {
         std::cout<< "ChromeTrace Initiallized Done"<<std::endl;
 }
 
-// 函数用于将事件转换为JSON字符串
+// Function to convert events to JSON string
 cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
- // 创建JSON对象
-    cJSON_AddStringToObject(root, "name", traceName[event.name]);
+ // Create cJSON object
+    cJSON_AddStringToObject(root, "name", event.name);
     cJSON_AddStringToObject(root, "ph", event.ph);
     cJSON_AddNumberToObject(root, "ts", event.ts);
     cJSON_AddStringToObject(root, "pid", processName[event.pid]);
@@ -59,7 +59,7 @@ cJSON* ChromeTrace::EventToJson(const ChromeTraceEvent& event, cJSON *root) {
     return root;
 }
 
-// 线程函数，用于接收Socket信息并保存到std::list
+// Thread function, used to receive Socket information and save it to std::list
 void ChromeTrace::ReceiverThread() {
     long idx=0;
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -110,7 +110,7 @@ void ChromeTrace::ReceiverThread() {
     close(sockfd);
 }
 
-// 线程函数，用于从std::list中读取数据包并写入文件
+// Thread function for reading packets from std::list and writing to a file
 void ChromeTrace::WriterThread() {
     long idx=0;
     std::ofstream outputFile(TRACE_FILE, std::ios::trunc);
@@ -120,7 +120,7 @@ void ChromeTrace::WriterThread() {
     }
     outputFile <<"["<<std::endl;
     while (true) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // 等待一段时间
+        std::this_thread::sleep_for(std::chrono::milliseconds(100)); // wait for some time
 
         std::list<ChromeTraceEvent> eventsToWrite;
 
@@ -136,7 +136,7 @@ void ChromeTrace::WriterThread() {
                     std::cout << "Writer get "<< idx++<<"s events"<<std::endl;
                 cJSON *root = cJSON_CreateObject();
                 cJSON* jsonEvent = EventToJson(event, root);
-                    // 将JSON对象序列化为字符串
+                    // Serialize JSON object to string
                 char *jsonStr = cJSON_Print(jsonEvent);
                 outputFile << jsonStr <<"," <<std::endl;
                 cJSON_Delete(jsonEvent);
@@ -146,15 +146,15 @@ void ChromeTrace::WriterThread() {
     outputFile.close();
 }
 
-inline void ChromeTrace::FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat) {
-    event.name = name;
+inline void ChromeTrace::FillCommonEvent(ChromeTraceEvent &event, uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat) {
+    memcpy(event.name, name, strlen(name)>63?63:strlen(name));
     event.pid = pid;
     event.tid = tid;
     event.ts = ts;
     event.cat = cat;
 }
 
-void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
@@ -163,7 +163,7 @@ void ChromeTrace::DurationTraceBegin(uint32_t pid, uint32_t tid, uint32_t name, 
     send(sockfd, &event, sizeof(event), 0);
 }
 
-void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event={0};
@@ -172,7 +172,7 @@ void ChromeTrace::DurationTraceEnd(uint32_t pid, uint32_t tid, uint32_t name, ui
     send(sockfd, &event, sizeof(event), 0);
 }
 
-void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts,uint64_t dur, uint32_t cat=0) {
+void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, const char*name, uint64_t ts,uint64_t dur, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", dur "<<dur<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
@@ -182,7 +182,7 @@ void ChromeTrace::CompleteTrace(uint32_t pid, uint32_t tid, uint32_t name, uint6
     send(sockfd, &event, sizeof(event), 0);
 }
 
-void ChromeTrace::InstantTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, char scop, uint32_t cat=0) {
+void ChromeTrace::InstantTrace(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, char scop, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", scop "<<scop<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
@@ -192,7 +192,7 @@ void ChromeTrace::InstantTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64
     send(sockfd, &event, sizeof(event), 0);
 }
 
-void ChromeTrace::CounterTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+void ChromeTrace::CounterTrace(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
@@ -201,7 +201,7 @@ void ChromeTrace::CounterTrace(uint32_t pid, uint32_t tid, uint32_t name, uint64
     send(sockfd, &event, sizeof(event), 0);
 }
 
-void ChromeTrace::AsyncTraceNestStart(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+void ChromeTrace::AsyncTraceNestStart(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
@@ -210,7 +210,7 @@ void ChromeTrace::AsyncTraceNestStart(uint32_t pid, uint32_t tid, uint32_t name,
     send(sockfd, &event, sizeof(event), 0);
 }
 
-void ChromeTrace::AsyncTraceNestEnd(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+void ChromeTrace::AsyncTraceNestEnd(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
@@ -218,7 +218,7 @@ void ChromeTrace::AsyncTraceNestEnd(uint32_t pid, uint32_t tid, uint32_t name, u
     event.ph[0] = 'e';
     send(sockfd, &event, sizeof(event), 0);
 }
-void ChromeTrace::AsyncTraceNestInstant(uint32_t pid, uint32_t tid, uint32_t name, uint64_t ts, uint32_t cat=0) {
+void ChromeTrace::AsyncTraceNestInstant(uint32_t pid, uint32_t tid, const char*name, uint64_t ts, uint32_t cat=0) {
     if(debug)
         std::cout << __func__ <<" pid "<<pid<<", tid "<<tid<<", name "<<name<< ", ts "<<ts<<", cat "<<cat<<std::endl;
     ChromeTraceEvent event = {0};
